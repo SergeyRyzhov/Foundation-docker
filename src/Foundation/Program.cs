@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
@@ -30,6 +31,21 @@ namespace Foundation
                 return Host.CreateDefaultBuilder(args)
                     .ConfigureCmsDefaults()
                     .UseSerilog()
+                    .ConfigureAppConfiguration((hostingContext, config) =>
+                    {
+                        config.Sources.Clear();
+                        var env = hostingContext.HostingEnvironment;
+                        config.AddJsonFile("appsettings.json", true, true);
+                        config.AddJsonFile($"appsettings.{env.EnvironmentName}.json", true, true);
+
+                        config.AddEnvironmentVariables();
+                        config.AddUserSecrets(typeof(Startup).Assembly, true);
+
+                        if (args != null)
+                        {
+                            config.AddCommandLine(args);
+                        }
+                    })
                     .ConfigureWebHostDefaults(webBuilder =>
                     {
                         webBuilder.UseStartup<Startup>();
